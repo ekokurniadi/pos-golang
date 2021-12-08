@@ -1,0 +1,19 @@
+{{define "footer"}}
+</div>
+</div>
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/bootadmin.min.js"></script>
+<script src="/js/ajax.min.js"></script>
+<script>
+    Vue.use(VueNumeric.default);
+    Vue.filter('toCurrency', function(value) {
+        return accounting.formatMoney(value, "", 0, ".", ",");
+        return value;
+    });
+</script>
+</body>
+
+</html>
+{{end}}

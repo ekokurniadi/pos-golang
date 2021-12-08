@@ -1,0 +1,302 @@
+{{define "form-transaksi"}}
+
+<style>
+    .fit-image {
+        width: 100%;
+        object-fit: cover;
+        height: 120px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-7">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="input-group mb-md">
+                            <span class="input-group-addon btn-primary text-center" style="width: 40px;vertical-align: middle;">
+                                <i class="fa fa-barcode py-3"></i>
+                            </span>
+                            <input type="text" class="form-control" onkeyup="barcode(this)" id="barcode" placeholder="Barcode Scan">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card mb-4" style="overflow-y: scroll;min-height: 500px;height: 500px; max-height: 500px;">
+                    <div class="card-body">
+                        <form id="form_" method="post">
+                            <table class="table table-bordered mb-0">
+                                <thead style="background-color: #34495e;color: white;">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Kode Produk</th>
+                                        <th>Produk</th>
+                                        <th>Harga</th>
+                                        <th width="100px">Qty</th>
+                                        <th width="50px">Diskon(%)</th>
+                                        <th>Diskon (RP)</th>
+                                        <th>Total</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-if="!produk.length">
+                                        <td colspan="8" align="center">Belum ada produk dipilih</td>
+                                    </tr>
+                                    <tr v-for="(pr, index) of produk">
+                                        <td class="text-center">${index+1}</td>
+                                        <td>
+                                            ${pr.id_produk}
+                                        </td>
+                                        <td>
+                                            ${pr.deskripsi_produk}
+                                        </td>
+                                        <td>
+                                            ${pr.harga | toCurrency}
+                                        </td>
+                                        <td>
+
+                                            <input type="number" @keypress="isNumber($event)" class="form-control" :read-only="mode=='detail'" v-model="pr.qty" :empty-value="1">
+                                        </td>
+                                        <td>
+                                            <vue-numeric :read-only="mode=='detail'" @keypress="isNumber($event)" class="form-control" thousand-separator="." v-model="pr.diskon_percent" :empty-value="0" />
+                                        </td>
+
+                                        <td>
+                                            ${hargaDiskon(pr) | toCurrency}
+                                        </td>
+                                        <td>
+
+                                            ${subTotal(pr) | toCurrency}
+                                        </td>
+                                        <td align="center">
+                                            <button @click.prevent="delDetails(index) " type="button " class="btn btn-danger btn-xs btn-flat "><i
+                                                    class="fa fa-trash "></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="thead-light " style="color: #777; ">
+                                        <th colspan="8">SubTotal</th>
+                                        <th>Rp.${total}</th>
+                                    </tr>
+                                    <tr style="background-color: #0099e6;color: white; ">
+                                        <th colspan="8">Total</th>
+                                        <th>Rp.${grandTotal}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-body" id="card-produk">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="input-group mb-md">
+                            <input type="text" class="form-control" onkeyup="pencarian()" id="pencarian" placeholder="Pencarian... ">
+                            <span class="input-group-addon btn-primary text-center " onclick="alert( 'hello'); " style="width: 40px;vertical-align: middle; ">
+                                <i class="fa fa-search py-3 "></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="overflow-y: scroll;min-height: 500px;height: 500px; max-height: 500px;" id="list">
+
+                </div>
+
+                <div class="paging d-flex justify-content-center py-3"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var form_ = new Vue({
+        el: '#form_',
+        delimiters: ['${', '}'],
+        data: {
+            mode: '',
+            detailProduk: {
+                id_produk: '',
+                deskripsi_produk: '',
+                qty: '',
+                harga: '',
+                diskon_percent: '',
+                diskon: ''
+            },
+            produk: [],
+        },
+        methods: {
+            clearDetail: function() {
+                this.detailProduk = {}
+            },
+            delDetails: function(index) {
+                this.produk.splice(index, 1);
+            },
+            addDetail: function() {
+                this.produk.push(this.detailProduk);
+            },
+            diskonPersen: function(pr) {
+                diskonPersen = ((pr.harga * pr.diskon_percent) / 100);
+                return diskonPersen;
+            },
+            subTotal: function(pr) {
+                return (pr.harga - ((pr.harga * pr.diskon_percent) / 100)) * pr.qty;
+            },
+            hargaDiskon: function(pr) {
+                hargaDiskon = (pr.harga - ((pr.harga * pr.diskon_percent) / 100));
+                return hargaDiskon;
+            },
+            isNumber: function(evt) {
+                evt = (evt) ? evt : window.event;
+                var charCode = (evt.which) ? evt.which : evt.keyCode;
+                if ((charCode > 31 && (charCode < 48 || charCode > 57)) && charCode !== 46) {
+                    evt.preventDefault();;
+                } else {
+                    return true;
+                }
+            },
+
+        },
+        computed: {
+            total() {
+                return this.produk.reduce((total, item) => {
+                    return total + (item.qty * item.harga - ((item.harga * item.diskon_percent) / 100) * item.qty);
+                }, 0);
+            },
+            grandTotal() {
+                return this.produk.reduce((total, item) => {
+                    return total + (item.qty * item.harga - ((item.harga * item.diskon_percent) / 100) * item.qty);
+                }, 0);
+            }
+        }
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        paginate(1, 12);
+
+    });
+
+    window.addEventListener("keydown", function(event) {
+        switch (event.code) {
+            case 'F1':
+                alert("hello")
+                break;
+            case 'F2':
+                alert("hello2")
+                break;
+        }
+    }, true);
+
+    function ef1(event) {}
+
+    function paginate(page) {
+        let offset = 12;
+        getData(page, offset)
+    }
+
+    function buildPage(currentPage, numberPerPage = 12, data) {
+        const trimStart = (currentPage - 1) * numberPerPage
+        const trimEnd = trimStart + numberPerPage
+        var result = data.slice(trimStart, trimEnd);
+        html = '';
+        for (var i = 0; i < result.length; i++) {
+
+            html += '<div onclick="pilihProduk(' + result[i]['id'] + ')" class="col-md-4 mt-2"><div class="card"><div class="card-body"><img class="img-responsive fit-image" src="/images/' + result[i]['gambar'] + '" alt=""></div><div class="card-footer"><div><p>' + result[i]['nama_produk'] + '</p><p>' + result[i]['harga_jual'] + '</p></div><div><a href="#" type="button" class="btn btn-flat btn-sm btn-success" onClick="pilihProduk(' + result[i]['id'] + ')"><i class="fa fa-shopping-cart "></i> Beli Produk</a></div></div></div></div>'
+        }
+        $('#list').html(html);
+    }
+
+    function pilihProduk(kode) {
+        $.ajax({
+            url: '/api/v1/items/' + parseInt(kode),
+            method: 'GET',
+            dataType: 'JSON',
+            contentType: 'application/json',
+            data: {},
+            beforeSend: function() {
+
+            },
+            success: function(response) {
+                form_.detailProduk = {
+                    id_produk: response.data.kode_produk,
+                    deskripsi_produk: response.data.nama_produk,
+                    qty: 1,
+                    harga: response.data.harga_jual,
+                    diskon_percent: 0,
+                    diskon: 0,
+                }
+                form_.addDetail();
+            }
+        });
+    }
+
+    function pencarian() {
+        var filter = $('#pencarian').val();
+        if (filter == "" || filter == undefined) {
+            paginate(1, 12);
+        } else {
+            $.ajax({
+                url: '/api/v1/items/search',
+                dataType: "JSON",
+                contentType: 'application/json',
+                method: "POST",
+                data: JSON.stringify({
+                    "filter": filter
+                }),
+                beforeSend: function() {
+                    $('#list').html('<div class="col-md-12 text-center">loading...</div>')
+                },
+                success: function(response) {
+
+                    buildPage(1, response.data.length, response.data)
+                }
+            });
+        }
+    }
+
+    function getData(page, offset) {
+        if (page == 0) {
+            page = 1;
+        }
+        $.ajax({
+            url: '/api/v1/items',
+            method: 'GET',
+            dataType: 'JSON',
+            cache: false,
+            processData: false,
+            beforeSend: function() {
+                $('#list').html('<div class="col-md-12 text-center">loading...</div>')
+            },
+            success: function(response) {
+                buildPage(page, offset, response.data);
+                var totalData = response.data.length;
+                var numberOfItems = totalData;
+                var numberPerPage = 12;
+                var currentPage = 1;
+                var numberOfPages = Math.ceil(numberOfItems / numberPerPage)
+                var html = "";
+                for (var i = 1; i <= numberOfPages; i++) {
+                    html += "<button class='btn btn-rounded btn-danger btn-sm ml-1 mt-1' type='button' onclick='buildPage(" + i + "," + offset + "," + JSON.stringify(response.data) + " )'>" + i + "</button>";
+                }
+                $('.paging').html(html)
+            }
+        });
+    }
+</script>
+<script>
+    Vue.use(VueNumeric.default);
+    Vue.filter('toCurrency', function(value) {
+        return accounting.formatMoney(value, " ", 0, ". ", ", ");
+
+    });
+</script>
+{{end}}
